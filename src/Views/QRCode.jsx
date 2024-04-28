@@ -88,7 +88,7 @@ const QRCodeComponent = () => {
       ) : (
         <main className="flex-1 flex flex-col items-center justify-center">
           <h1>Where did you come from?</h1>
-        </main>
+        </main> 
       )}
     </div>
   );
