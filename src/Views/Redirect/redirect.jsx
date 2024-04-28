@@ -13,16 +13,16 @@ const Redirect = () => {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [userDocExists, setUserDocExists] = useState(false);
+    const [redirectFlag, setRedirectFlag] = useState(false);
+    const [redirectTimeout, setRedirectTimeout] = useState(null);
 
     useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged(async (user) => {
             if (user) {
                 setIsLoggedIn(true);
                 setValidation(uuidValidate(uniqueString));
-
                 const userRef = doc(db, 'users', user.uid);
                 const userDoc = await getDoc(userRef);
-
                 if (userDoc.exists()) {
                     setUserDocExists(true);
                 } else {
@@ -43,13 +43,20 @@ const Redirect = () => {
             const unsubscribe = onSnapshot(doc(db, 'users', auth.currentUser.uid), (doc) => {
                 const currentProcess = doc.data().CurrentProcess;
                 if (currentProcess.QRCodeUniqueString === uniqueString) {
-                    updateDoc(doc.ref, {
-                        'CurrentProcess.isQRCodeScanned': true,
-                    });
+                    updateDoc(doc.ref, { 'CurrentProcess.isQRCodeScanned': true });
                     setIsLoading(false);
+                    setRedirectFlag(true);
+
+                    // Set a timeout for redirection after 3 seconds
+                    const timeout = setTimeout(() => {
+                        redirectUpload();
+                    }, 3000);
+                    setRedirectTimeout(timeout);
                 } else {
                     console.log('Invalid Token or Expired');
                     setIsLoading(false);
+                    setRedirectFlag(false);
+                    clearTimeout(redirectTimeout); // Clear the timeout if the condition is not met
                 }
             });
             return unsubscribe;
@@ -69,12 +76,12 @@ const Redirect = () => {
             ) : userDocExists ? (
                 validation ? (
                     <div>
-                        <p> Thank you for using our Service</p>
-                        {redirectUpload()}
+                        <p>Thank you for using our Service</p>
+                        {redirectFlag && <p>Redirecting in 3 seconds...</p>}
                     </div>
                 ) : (
                     <div>
-                        <p> Invalid Code </p>
+                        <p>Invalid Code</p>
                     </div>
                 )
             ) : (

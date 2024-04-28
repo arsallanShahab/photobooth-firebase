@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import Header from "./Header/Header";
-import { useNavigate } from "react-router-dom";
 import ExampleImage from '../assets/testImage.jpg';
 import { auth, db, storage } from './FireBase/Firebase';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
@@ -8,29 +7,29 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { CgSpinner } from 'react-icons/cg';
 
 const PhotoUpload = () => {
-  const navigate = useNavigate();
   const [imagePreview, setImagePreview] = useState(null);
   const [useExampleImage, setUseExampleImage] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [photoLink, setPhotoLink] = useState('');
+  const [selectedFile, setSelectedFile] = useState(null);
 
   const handleImageUpload = (event) => {
     const file = event.target.files[0];
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setImagePreview(reader.result);
+    if (file && file.type.startsWith('image/') && file.size > 0) {
+      setImagePreview(URL.createObjectURL(file));
       setUseExampleImage(false);
-    };
-    if (file) {
-      reader.readAsDataURL(file);
+      setSelectedFile(file);
+    } else {
+      // Handle invalid file type or empty file
     }
   };
 
   const handleUseExampleImage = () => {
     setImagePreview(ExampleImage);
     setUseExampleImage(true);
+    setSelectedFile(null);
   };
 
   const UploadPhoto = async () => {
@@ -39,9 +38,9 @@ const PhotoUpload = () => {
       const user = auth.currentUser;
       if (user) {
         const userPhotoRef = ref(storage, `usersPhotos/${user.uid}`);
-        const photoRef = ref(userPhotoRef, `${new Date().getTime()}-photo`);
-        const uploadTask = uploadBytesResumable(photoRef, imagePreview);
-  
+        const photoRef = ref(userPhotoRef, `${new Date()}-photo`);
+        const uploadTask = uploadBytesResumable(photoRef, useExampleImage ? ExampleImage : selectedFile, null);
+
         uploadTask.on(
           'state_changed',
           (snapshot) => {
@@ -67,6 +66,7 @@ const PhotoUpload = () => {
     }
   };
 
+
   return (
     <div className="flex flex-col bg-gray-200 min-h-screen">
       <Header />
@@ -75,7 +75,7 @@ const PhotoUpload = () => {
           {imagePreview ? (
             <img src={imagePreview} alt="Uploaded" className="max-w-full max-h-full" />
           ) : (
-            <span className="text-gray-500 text-2xl">Scan QR</span>
+            <span className="text-gray-500 text-2xl">Your Photo Here!</span>
           )}
           {imagePreview ? (
             <label className="absolute bottom-2 right-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer">
@@ -110,7 +110,7 @@ const PhotoUpload = () => {
         {uploadSuccess && (
           <div className="mt-4 flex flex-col items-center">
             <p className="text-green-500 font-bold">Photo uploaded successfully!</p>
-            <img src={photoLink} alt="Uploaded" className="max-w-full max-h-96 mt-4" />
+           
           </div>
         )}
       </main>

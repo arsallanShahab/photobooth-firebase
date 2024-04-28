@@ -6,6 +6,7 @@ import { validate as uuidValidate } from 'uuid';
 import { auth, db } from './FireBase/Firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { CgSpinner } from 'react-icons/cg';
+import Rofabs from '../assets/ROFABS.jpg';
 
 const QRCodeComponent = () => {
   const navigate = useNavigate();
@@ -65,6 +66,7 @@ const QRCodeComponent = () => {
             </>
           ) : !photoUploaded ? (
             <>
+              <img className="max-w-full max-h-64" src={Rofabs} alt="Rofabs" />
               <CgSpinner size={64} className="mt-1 animate-spin" />
               <p>Waiting for your picture upload to be completed</p>
             </>
@@ -88,7 +90,7 @@ const QRCodeComponent = () => {
       ) : (
         <main className="flex-1 flex flex-col items-center justify-center">
           <h1>Where did you come from?</h1>
-        </main> 
+        </main>
       )}
     </div>
   );
