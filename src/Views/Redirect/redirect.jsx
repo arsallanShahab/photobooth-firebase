@@ -4,6 +4,7 @@ import { auth, db } from '../FireBase/Firebase';
 import { validate as uuidValidate } from 'uuid';
 import { doc, updateDoc, onSnapshot, getDoc } from 'firebase/firestore';
 import { CgSpinner } from 'react-icons/cg';
+import Byebye from '../../assets/byebye.png';
 
 const Redirect = () => {
     const navigate = useNavigate();
@@ -56,7 +57,7 @@ const Redirect = () => {
                     console.log('Invalid Token or Expired');
                     setIsLoading(false);
                     setRedirectFlag(false);
-                    clearTimeout(redirectTimeout); // Clear the timeout if the condition is not met
+                    clearTimeout(redirectTimeout);
                 }
             });
             return unsubscribe;
@@ -71,24 +72,29 @@ const Redirect = () => {
 
     return (
         <div className="flex bg-gray-200 flex-col items-center justify-center h-screen">
-            {isLoading ? (
-                <CgSpinner size={64} className="mt-1 animate-spin" />
-            ) : userDocExists ? (
-                validation ? (
-                    <div>
-                        <p>Thank you for using our Service</p>
-                        {redirectFlag && <p>Redirecting in 3 seconds...</p>}
-                    </div>
-                ) : (
-                    <div>
-                        <p>Invalid Code</p>
-                    </div>
-                )
-            ) : (
-                <div>
-                    <p>Oops, Are you sure you came from QR Code?</p>
-                </div>
-            )}
+            {isLoading ?
+                (
+                    <CgSpinner size={64} className="mt-1 animate-spin" />
+                ) : userDocExists ?
+                    (
+                        validation ?
+                            (
+                                <div className="flex-1 flex flex-col items-center justify-center">
+                                    <img src={Byebye} alt="Rofabs" />
+                                    <p>Thank you for using our Service</p>
+                                    {redirectFlag && <p>Redirecting in 3 seconds...</p>}
+                                </div>
+                            ) : (
+                                <div>
+                                    <p>Invalid Code</p>
+                                </div>
+                            )
+                    ) : (
+                        <div className="flex-1 flex flex-col items-center justify-center">
+                            <CgSpinner size={64} className="mt-1 animate-spin" />
+                            <p>Please wait a moment, if you are stuck here then, maybe you came from wrong URL</p>
+                        </div>
+                    )}
         </div>
     );
 };

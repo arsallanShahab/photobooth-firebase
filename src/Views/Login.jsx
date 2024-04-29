@@ -116,9 +116,11 @@ const Login = () => {
             if (id) {
                 // Navigate to the /redirect page with the id as a query parameter
                 navigate(`/redirect?id=${id}`);
+                toast.error('Please Upload Your Photo');
             } else {
                 // Navigate to the /Home page if there is no id in the URL
                 navigate('/Home');
+                toast.error('Welcome To Photo Booth');
             }
         } catch (error) {
             console.error('Error verifying OTP:', error);

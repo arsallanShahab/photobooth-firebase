@@ -12,7 +12,6 @@ const Welcome = () => {
     };
 
 
-
     return (
         <div className="flex bg-gray-200 flex-col items-center justify-center h-screen">
             <Header />

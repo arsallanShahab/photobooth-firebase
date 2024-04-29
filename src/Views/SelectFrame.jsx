@@ -1,7 +1,8 @@
 import React, { useState, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from "react-router-dom";
 import Header from './Header/Header';
 import html2canvas from 'html2canvas';
+import { toast, Toaster } from 'react-hot-toast';
 
 
 // Classic Frames
@@ -24,13 +25,16 @@ import GradientFrame6 from '../assets/GradientFrames/Gradient6.png';
 
 const SelectFrame = () => {
 
+    const navigate = useNavigate();
     const location = useLocation();
-    const imagePreview = location.state?.imagePreview;
+    const imagePreview = location.state?.photoLink;
     const [selectedFrame, setSelectedFrame] = useState(null);
     const [isClassicDropdownOpen, setIsClassicDropdownOpen] = useState(false);
     const [isGradientDropdownOpen, setIsGradientDropdownOpen] = useState(false);
     const combinedImageRef = useRef(null);
 
+
+    console.log(imagePreview);
 
     const classicFrames = [
         { id: 1, src: classicFrame1 },
@@ -58,15 +62,24 @@ const SelectFrame = () => {
     };
 
     const toggleGradientDropdown = () => {
-        setIsGradientDropdownOpen(!isGradientDropdownOpen);
-        setIsClassicDropdownOpen(false);
+        toast.error('Sorry These frames are not available right now..');
+
+        /*  setIsGradientDropdownOpen(!isGradientDropdownOpen);
+        setIsClassicDropdownOpen(false); */
     };
+
+
+    const handleHome = async () => {
+        navigate('/login');
+    }
+
 
     const handleFrameSelect = (frame) => {
         setSelectedFrame(frame);
         setIsClassicDropdownOpen(false);
         setIsGradientDropdownOpen(false);
     };
+
 
     const handleDownload = () => {
         if (combinedImageRef.current) {
@@ -80,12 +93,17 @@ const SelectFrame = () => {
         }
     };
 
+    const handlePrint = async () => {
+        toast.error('We will have your photo ready, once we get printer :D');
+    }
+
 
     return (
         <div className="flex flex-col items-center min-h-screen bg-gray-200">
             <Header />
             <h1 className="text-2xl font-bold mb-4">Select Frame</h1>
             <div className="flex">
+                <Toaster toastOptions={{ duration: 4000 }} />
                 <div className="mr-4 w-64">
                     {/* Classic Frames Dropdown */}
                     <div className="relative">
@@ -166,13 +184,31 @@ const SelectFrame = () => {
 
 
             </div>
-            <button
-                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-4"
-                onClick={handleDownload}
-                disabled={!selectedFrame}
-            >
-                Download
-            </button>
+            <div className="flex flex-row">
+
+                <button
+                    className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-4 mr-3"
+                    onClick={handleHome}
+                    /* disabled={!selectedFrame} */
+                >
+                    Home
+                </button>
+                <button
+                    className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-4 mr-3"
+                    onClick={handleDownload}
+                   /*  disabled={!selectedFrame} */
+                >
+                    Download
+                </button>
+                <button
+                    className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mt-4"
+                    onClick={handlePrint}
+                  /*   disabled={!selectedFrame} */
+                >
+                    Print
+                </button>
+            </div>
+
         </div>
     );
 };
