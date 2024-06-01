@@ -16,23 +16,37 @@ const Login = () => {
     const [countdown, setCountdown] = useState(0);
     const [showOtpInput, setShowOtpInput] = useState(false);
     const recaptchaContainerRef = React.createRef();
-    const [recaptchaInstance, setRecaptchaInstance] = useState(null);
-
-    const handleRecaptchaReset = useCallback(() => {
-        setRecaptchaInstance(null);
-    }, []);
+    const [recaptchaVerifier, setRecaptchaVerifier] = useState(null);
 
     useEffect(() => {
-        const handleRecaptchaTokenReset = () => {
-            handleRecaptchaReset();
+        const initializeRecaptcha = () => {
+            const recaptchaContainer = recaptchaContainerRef.current;
+            if (recaptchaContainer) {
+                window.recaptchaVerifier = new RecaptchaVerifier(
+                    auth,
+                    recaptchaContainer,
+                    {
+                        'size': 'invisible',
+                        'callback': () => {
+                           
+                        },
+                        'expired-callback': () => {
+                           
+                            window.recaptchaVerifier.recaptcha.reset();
+                        },
+                        'error-callback': () => {
+                            
+                            window.recaptchaVerifier.recaptcha.reset();
+                        },
+                    }
+                );
+                setRecaptchaVerifier(window.recaptchaVerifier);
+            }
         };
 
-        document.addEventListener('recaptcha-token-reset', handleRecaptchaTokenReset);
+        initializeRecaptcha();
+    }, []);
 
-        return () => {
-            document.removeEventListener('recaptcha-token-reset', handleRecaptchaTokenReset);
-        };
-    }, [handleRecaptchaReset]);
 
     useEffect(() => {
         let timer;
@@ -59,37 +73,18 @@ const Login = () => {
         setError('');
 
         try {
-            let recaptchaVerifier;
-
-            if (!recaptchaInstance) {
-                recaptchaVerifier = new RecaptchaVerifier(
-                    auth,
-                    recaptchaContainerRef.current,
-                    {
-                        'size': 'invisible',
-                        'callback': () => {
-                            // Called when reCAPTCHA verification is successful
-                        },
-                        'expired-callback': () => {
-                            // Called when reCAPTCHA has expired
-                            recaptchaVerifier.recaptcha.reset();
-                        },
-                        'error-callback': () => {
-                            // Called when there's an error with reCAPTCHA
-                            recaptchaVerifier.recaptcha.reset();
-                        },
-                    }
-                );
-
-                // Store the reCAPTCHA instance
-                setRecaptchaInstance(recaptchaVerifier.recaptcha);
-            } else {
-                recaptchaVerifier = recaptchaInstance;
+            if (phoneNumber.length < 10) {
+                toast.error('Please enter 10 digit phone number');
+                return;
             }
 
             const formattedPhoneNumber = `+91${phoneNumber}`;
             console.log('Formatted Phone Number:', formattedPhoneNumber); // Debug
-            const confirmationResult = await signInWithPhoneNumber(auth, formattedPhoneNumber, recaptchaVerifier);
+            const confirmationResult = await signInWithPhoneNumber(
+                auth,
+                formattedPhoneNumber,
+                recaptchaVerifier
+            );
             setCountdown(60);
             setShowOtpInput(true);
             window.confirmationResult = confirmationResult;
@@ -97,28 +92,35 @@ const Login = () => {
         } catch (error) {
             console.error('Error sending OTP:', error);
             setError('Failed to send OTP. Please try again.');
-            setRecaptchaInstance(null); // Reset the recaptchaInstance on error
         } finally {
             setIsLoading(false);
         }
     };
 
+
+    console.log(countdown);
+
     const verifyOTP = async () => {
         setIsLoading(true);
         setError('');
         try {
+
+            if (otp.length < 6) {
+                toast.error('Please Enter Valid 6 Digit OTP')
+                return;
+            }
             await window.confirmationResult.confirm(otp);
 
-            // Check if the URL has a query parameter 'id'
+
             const urlParams = new URLSearchParams(window.location.search);
             const id = urlParams.get('id');
 
             if (id) {
-                // Navigate to the /redirect page with the id as a query parameter
+
                 navigate(`/redirect?id=${id}`);
                 toast.error('Please Upload Your Photo');
             } else {
-                // Navigate to the /Home page if there is no id in the URL
+
                 navigate('/Home');
                 toast.error('Welcome To Photo Booth');
             }

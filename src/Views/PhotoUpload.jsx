@@ -7,6 +7,7 @@ import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { CgSpinner, CgSpinnerAlt } from 'react-icons/cg';
 import { useLocation } from "react-router-dom";
 import { validate as uuidValidate } from 'uuid';
+import imageCompression from 'browser-image-compression';
 
 //Images
 import Byebye from '../assets/byebye.png';
@@ -36,7 +37,7 @@ const PhotoUpload = () => {
   const [photoLink, setPhotoLink] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
 
-
+  const [isPhotoUploaded, setIsPhotoUploaded] = useState(false);
 
 
 
@@ -73,12 +74,32 @@ const PhotoUpload = () => {
 
   console.log(isMismatch);
 
-  const handleImageUpload = (event) => {
+  const compressImage = async (file) => {
+    const options = {
+      maxSizeMB: 2, 
+      maxWidthOrHeight: 1920, 
+      useWebWorker: true,
+    };
+
+    try {
+      const compressedFile = await imageCompression(file, options);
+      return compressedFile;
+    } catch (error) {
+      console.error('Error compressing image:', error);
+      return file; 
+    }
+  };
+
+  const handleImageUpload = async (event) => {
     const file = event.target.files[0];
     if (file && file.type.startsWith('image/') && file.size > 0) {
       setImagePreview(URL.createObjectURL(file));
       setUseExampleImage(false);
       setSelectedFile(file);
+      setIsPhotoUploaded(false);
+      const compressedFile = await compressImage(file);
+      setSelectedFile(compressedFile);
+      setIsPhotoUploaded(false);
     } else {
       // Handle invalid file type or empty file
     }
@@ -96,7 +117,7 @@ const PhotoUpload = () => {
       const user = auth.currentUser;
       if (user) {
         const userPhotoRef = ref(storage, `usersPhotos/${user.uid}`);
-        const photoRef = ref(userPhotoRef, `${new Date()}-photo`);
+        const photoRef = ref(userPhotoRef, `${user.uid}-photo`);
         const uploadTask = uploadBytesResumable(photoRef, useExampleImage ? ExampleImage : selectedFile, null);
 
         uploadTask.on(
@@ -119,6 +140,7 @@ const PhotoUpload = () => {
             setPhotoLink(downloadURL);
             setUploadSuccess(true);
             setIsUploading(false);
+            setIsPhotoUploaded(true);
           }
         );
       }
@@ -230,7 +252,7 @@ const PhotoUpload = () => {
                   </div>
                 )}
               </div>
-              {imagePreview ? (
+              {imagePreview && !isPhotoUploaded ? (
                 <button
                   className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
                   onClick={UploadPhoto}
@@ -253,6 +275,10 @@ const PhotoUpload = () => {
                 <div className="mt-4 flex flex-col items-center">
                   <p className="text-green-500 font-bold">
                     Photo uploaded successfully!
+                  </p>
+
+                  <p className="text-black-500 font-bold">
+                    Please Click On Processed With Photo In Machine Screen
                   </p>
                 </div>
               )}

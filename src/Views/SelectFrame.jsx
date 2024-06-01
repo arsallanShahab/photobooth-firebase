@@ -15,6 +15,7 @@ import classicFrame6 from '../assets/ClassicFrames/classicFrame6.png';
 import classicFrame7 from '../assets/ClassicFrames/classicFrame7.png';
 import classicFrame8 from '../assets/ClassicFrames/classicFrame8.png';
 
+
 // Gradient Frames
 import GradientFrame1 from '../assets/GradientFrames/Gradient1.png';
 import GradientFrame2 from '../assets/GradientFrames/Gradient2.png';
@@ -45,6 +46,7 @@ const SelectFrame = () => {
         { id: 6, src: classicFrame6 },
         { id: 7, src: classicFrame7 },
         { id: 8, src: classicFrame8 },
+
     ];
 
     const gradientFrames = [
@@ -82,17 +84,32 @@ const SelectFrame = () => {
 
 
     const handleDownload = () => {
-        if (combinedImageRef.current) {
-            html2canvas(combinedImageRef.current).then((canvas) => {
-                const dataURL = canvas.toDataURL('image/png');
-                const link = document.createElement('a');
-                link.download = 'framed-image.png';
-                link.href = dataURL;
-                link.click();
-            });
+        if (selectedFrame) {
+            // Download the combined image with the selected frame
+            if (combinedImageRef.current) {
+                html2canvas(combinedImageRef.current).then((canvas) => {
+                    const dataURL = canvas.toDataURL('image/png');
+                    const link = document.createElement('a');
+                    link.download = 'framed-image.png';
+                    link.href = dataURL;
+                    link.click();
+                });
+            }
+        } else {
+            // Download the original image directly from Firebase
+            fetch(imagePreview)
+                .then((response) => response.blob())
+                .then((blob) => {
+                    const url = window.URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.download = 'user-image.png';
+                    link.href = url;
+                    link.click();
+                    window.URL.revokeObjectURL(url);
+                })
+                .catch((error) => console.error('Error downloading image:', error));
         }
     };
-
     const handlePrint = async () => {
         toast.error('We will have your photo ready, once we get printer :D');
     }
@@ -176,6 +193,11 @@ const SelectFrame = () => {
                                     src={selectedFrame.src}
                                     alt="Selected Frame"
                                     className="absolute top-0 left-0 w-full h-full"
+                                    style={{
+                                        backgroundImage: `url(${selectedFrame.src})`,
+                                        backgroundSize: 'cover',
+                                        mixBlendMode: 'multiply', // or 'overlay'
+                                    }}
                                 />
                             )}
                         </div>
@@ -189,21 +211,21 @@ const SelectFrame = () => {
                 <button
                     className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-4 mr-3"
                     onClick={handleHome}
-                    /* disabled={!selectedFrame} */
+                /* disabled={!selectedFrame} */
                 >
                     Home
                 </button>
                 <button
                     className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-4 mr-3"
                     onClick={handleDownload}
-                   /*  disabled={!selectedFrame} */
+                /*  disabled={!selectedFrame} */
                 >
                     Download
                 </button>
                 <button
                     className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mt-4"
                     onClick={handlePrint}
-                  /*   disabled={!selectedFrame} */
+                /*   disabled={!selectedFrame} */
                 >
                     Print
                 </button>
