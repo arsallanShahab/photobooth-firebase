@@ -18,7 +18,7 @@ const QRCodeComponent = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const uniqueString = new URLSearchParams(location.search).get("id");
-  const redirectUrl = `http://localhost:3000/redirect?id=${uniqueString}`;
+  const redirectUrl = `https://photobooth-firebase.vercel.app/redirect?id=${uniqueString}`;
 
   const [validation, setValidation] = useState(null);
   const [isQRCodeScanned, setIsQRCodeScanned] = useState(false);
