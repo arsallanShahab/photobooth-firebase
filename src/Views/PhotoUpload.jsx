@@ -1,26 +1,21 @@
+import imageCompression from "browser-image-compression";
+import { doc, onSnapshot, updateDoc } from "firebase/firestore";
+import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
 import React, { useEffect, useState } from "react";
-import Header from "./Header/Header";
-import ExampleImage from '../assets/testImage.jpg';
-import { auth, db, storage } from './FireBase/Firebase';
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
-import { CgSpinner, CgSpinnerAlt } from 'react-icons/cg';
+import { CgSpinner, CgSpinnerAlt } from "react-icons/cg";
 import { useLocation } from "react-router-dom";
-import { validate as uuidValidate } from 'uuid';
-import imageCompression from 'browser-image-compression';
+import { validate as uuidValidate } from "uuid";
+import ExampleImage from "../assets/testImage.jpg";
+import { auth, db, storage } from "./FireBase/Firebase";
+import Header from "./Header/Header";
 
 //Images
-import Byebye from '../assets/byebye.png';
-import girl from '../assets/girl.png';
-
-
+import Byebye from "../assets/byebye.png";
+import girl from "../assets/girl.png";
 
 const PhotoUpload = () => {
-
-
   const location = useLocation();
-  const uniqueString = new URLSearchParams(location.search).get('id');
-
+  const uniqueString = new URLSearchParams(location.search).get("id");
 
   const [validation, setValidation] = useState(null);
   const [isDeleted, setIsDeleted] = useState(false);
@@ -34,24 +29,26 @@ const PhotoUpload = () => {
   const [cancelLoading, setCancelLoading] = useState(false);
 
   const [uploadSuccess, setUploadSuccess] = useState(false);
-  const [photoLink, setPhotoLink] = useState('');
+  const [photoLink, setPhotoLink] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
 
   const [isPhotoUploaded, setIsPhotoUploaded] = useState(false);
-
-
 
   const listenForCurrentProcessUpdates = () => {
     const user = auth.currentUser;
     if (user) {
       setValidation(uuidValidate(uniqueString));
-      const userRef = doc(db, 'users', user.uid);
+      const userRef = doc(db, "users", user.uid);
       const unsubscribe = onSnapshot(userRef, (doc) => {
         if (doc.exists()) {
           const currentProcess = doc.data().CurrentProcess;
 
           if (currentProcess.QRCodeUniqueString === uniqueString) {
-            if ((currentProcess && currentProcess.isDelete === true) || currentProcess.disablePhotoUpload === true || currentProcess.isCancelled === true) {
+            if (
+              (currentProcess && currentProcess.isDelete === true) ||
+              currentProcess.disablePhotoUpload === true ||
+              currentProcess.isCancelled === true
+            ) {
               setIsDeleted(true);
             } else {
               setIsDeleted(false);
@@ -59,7 +56,6 @@ const PhotoUpload = () => {
           } else {
             setMismatch(true);
           }
-
         }
       });
 
@@ -70,14 +66,14 @@ const PhotoUpload = () => {
   useEffect(() => {
     const unsubscribe = listenForCurrentProcessUpdates();
     return unsubscribe;
-  },);
+  });
 
   console.log(isMismatch);
 
   const compressImage = async (file) => {
     const options = {
-      maxSizeMB: 2, 
-      maxWidthOrHeight: 1920, 
+      maxSizeMB: 2,
+      maxWidthOrHeight: 1920,
       useWebWorker: true,
     };
 
@@ -85,14 +81,14 @@ const PhotoUpload = () => {
       const compressedFile = await imageCompression(file, options);
       return compressedFile;
     } catch (error) {
-      console.error('Error compressing image:', error);
-      return file; 
+      console.error("Error compressing image:", error);
+      return file;
     }
   };
 
   const handleImageUpload = async (event) => {
     const file = event.target.files[0];
-    if (file && file.type.startsWith('image/') && file.size > 0) {
+    if (file && file.type.startsWith("image/") && file.size > 0) {
       setImagePreview(URL.createObjectURL(file));
       setUseExampleImage(false);
       setSelectedFile(file);
@@ -118,12 +114,17 @@ const PhotoUpload = () => {
       if (user) {
         const userPhotoRef = ref(storage, `usersPhotos/${user.uid}`);
         const photoRef = ref(userPhotoRef, `${user.uid}-photo`);
-        const uploadTask = uploadBytesResumable(photoRef, useExampleImage ? ExampleImage : selectedFile, null);
+        const uploadTask = uploadBytesResumable(
+          photoRef,
+          useExampleImage ? ExampleImage : selectedFile,
+          null
+        );
 
         uploadTask.on(
-          'state_changed',
+          "state_changed",
           (snapshot) => {
-            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            const progress =
+              (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
             setUploadProgress(progress);
           },
           (error) => {
@@ -131,10 +132,10 @@ const PhotoUpload = () => {
           },
           async () => {
             const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-            const userRef = doc(db, 'users', user.uid);
+            const userRef = doc(db, "users", user.uid);
             await updateDoc(userRef, {
-              'CurrentProcess.photoLink': downloadURL,
-              'CurrentProcess.photoUploaded': true,
+              "CurrentProcess.photoLink": downloadURL,
+              "CurrentProcess.photoUploaded": true,
             });
 
             setPhotoLink(downloadURL);
@@ -147,25 +148,20 @@ const PhotoUpload = () => {
     }
   };
 
-
   const handleCancel = async () => {
     setCancelLoading(true);
     const user = auth.currentUser;
     try {
-
-      const userRef = doc(db, 'users', user.uid);
+      const userRef = doc(db, "users", user.uid);
       await updateDoc(userRef, {
-
-        'CurrentProcess.isCancelled': true,
+        "CurrentProcess.isCancelled": true,
       });
     } catch (error) {
-      console.log('Error', error);
+      console.log("Error", error);
     } finally {
       setCancelLoading(false);
     }
-
-  }
-
+  };
 
   return (
     <div className="flex flex-col bg-gray-200 min-h-screen">
@@ -173,9 +169,7 @@ const PhotoUpload = () => {
         <main className="flex-1 flex flex-col items-center justify-center">
           <img src={girl} alt="Rofabs" className="min-h-full max-h-96" />
 
-          <p className="pr-4 pl-4">
-            Maybe you came from wrong place..
-          </p>
+          <p className="pr-4 pl-4">Maybe you came from wrong place..</p>
         </main>
       ) : validation === null ? (
         <main className="flex-1 flex flex-col items-center justify-center">
@@ -204,7 +198,9 @@ const PhotoUpload = () => {
                     className="max-w-full max-h-full"
                   />
                 ) : (
-                  <span className="text-gray-500 text-2xl">Your Photo Here!</span>
+                  <span className="text-gray-500 text-2xl">
+                    Your Photo Here!
+                  </span>
                 )}
                 {imagePreview ? (
                   <label className="absolute bottom-2 right-2 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer">
@@ -224,13 +220,12 @@ const PhotoUpload = () => {
                         onClick={handleCancel}
                         disabled={cancelLoading}
                       >
-                        {cancelLoading ? (<span>
-                          Please wait
-                        </span>) : (
+                        {cancelLoading ? (
+                          <span>Please wait</span>
+                        ) : (
                           <span>Cancel</span>
                         )}
                       </button>
-
                     </div>
                     <label className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer mr-2">
                       Upload
@@ -247,8 +242,6 @@ const PhotoUpload = () => {
                     >
                       Use Example
                     </button>
-
-
                   </div>
                 )}
               </div>

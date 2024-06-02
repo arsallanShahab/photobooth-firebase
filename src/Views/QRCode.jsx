@@ -1,60 +1,69 @@
-import React, { useEffect, useState } from 'react';
-import QRCode from 'qrcode.react';
-import Header from "./Header/Header";
+import {
+  collection,
+  doc,
+  onSnapshot,
+  setDoc,
+  updateDoc,
+} from "firebase/firestore";
+import QRCode from "qrcode.react";
+import React, { useEffect, useState } from "react";
+import { CgSpinner } from "react-icons/cg";
 import { useLocation, useNavigate } from "react-router-dom";
-import { validate as uuidValidate } from 'uuid';
-import { auth, db } from './FireBase/Firebase';
-import { collection, doc, onSnapshot, setDoc, updateDoc } from 'firebase/firestore';
-import { CgSpinner } from 'react-icons/cg';
-import Rofabs from '../assets/ROFABS.jpg';
+import { validate as uuidValidate } from "uuid";
+import Rofabs from "../assets/ROFABS.jpg";
+import { auth, db } from "./FireBase/Firebase";
+import Header from "./Header/Header";
 
 const QRCodeComponent = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const uniqueString = new URLSearchParams(location.search).get('id');
+  const uniqueString = new URLSearchParams(location.search).get("id");
   const redirectUrl = `http://localhost:3000/redirect?id=${uniqueString}`;
 
   const [validation, setValidation] = useState(null);
   const [isQRCodeScanned, setIsQRCodeScanned] = useState(false);
   const [photoUploaded, setPhotoUploaded] = useState(false);
-  const [photoLink, setPhotoLink] = useState('');
+  const [photoLink, setPhotoLink] = useState("");
   const [loading, setLoading] = useState(false);
   const [unsubscribeSnapshot, setUnsubscribeSnapshot] = useState(null);
 
   const [isCancelled, setIsCancelled] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      if (user) {
-        setValidation(uuidValidate(uniqueString));
+    const unsubscribe = auth.onAuthStateChanged(
+      (user) => {
+        if (user) {
+          setValidation(uuidValidate(uniqueString));
 
-        const userRef = doc(db, 'users', user.uid);
-        const unsubscribeFromSnapshot = onSnapshot(
-          userRef,
-          (doc) => {
-            const currentProcess = doc.data().CurrentProcess;
+          const userRef = doc(db, "users", user.uid);
+          const unsubscribeFromSnapshot = onSnapshot(
+            userRef,
+            (doc) => {
+              const currentProcess = doc.data().CurrentProcess;
 
-            setIsQRCodeScanned(currentProcess.isQRCodeScanned);
-            setPhotoUploaded(currentProcess.photoUploaded);
-            setPhotoLink(currentProcess.photoLink || '');
-            setIsCancelled(currentProcess.isCancelled || false); 
-          },
-          (error) => {
-            console.error('Error fetching real-time data:', error);
-          }
-        );
+              setIsQRCodeScanned(currentProcess.isQRCodeScanned);
+              setPhotoUploaded(currentProcess.photoUploaded);
+              setPhotoLink(currentProcess.photoLink || "");
+              setIsCancelled(currentProcess.isCancelled || false);
+            },
+            (error) => {
+              console.error("Error fetching real-time data:", error);
+            }
+          );
 
-        setUnsubscribeSnapshot(() => unsubscribeFromSnapshot);
+          setUnsubscribeSnapshot(() => unsubscribeFromSnapshot);
 
-        return () => {
-          unsubscribeFromSnapshot();
-        };
-      } else {
-        navigate('/login');
+          return () => {
+            unsubscribeFromSnapshot();
+          };
+        } else {
+          navigate("/login");
+        }
+      },
+      (error) => {
+        console.error("Error checking authentication state:", error);
       }
-    }, (error) => {
-      console.error('Error checking authentication state:', error);
-    });
+    );
 
     return unsubscribe;
   }, [navigate, uniqueString]);
@@ -64,7 +73,7 @@ const QRCodeComponent = () => {
     try {
       const user = auth.currentUser;
       if (user) {
-        const usersRef = collection(db, 'users');
+        const usersRef = collection(db, "users");
         const userDocRef = doc(usersRef, user.uid);
         if (unsubscribeSnapshot) {
           unsubscribeSnapshot();
@@ -72,33 +81,36 @@ const QRCodeComponent = () => {
         await setDoc(userDocRef, {
           CurrentProcess: {
             isDelete: true,
-          }
-        })
-        navigate('/Home');
+          },
+        });
+        navigate("/Home");
       } else {
-        console.log('User is not authenticated');
+        console.log("User is not authenticated");
       }
     } catch (error) {
-      console.log('Something went wrong: ', error);
+      console.log("Something went wrong: ", error);
     } finally {
       setLoading(false);
     }
   };
+  console.log(photoLink, "photoLink");
 
   const handleProcessedWithPhoto = async () => {
     try {
       const user = auth.currentUser;
       if (user) {
-        const userDocRef = doc(db, 'users', user.uid);
+        const userDocRef = doc(db, "users", user.uid);
         await updateDoc(userDocRef, {
-          'CurrentProcess.disablePhotoUpload': true,
+          "CurrentProcess.disablePhotoUpload": true,
         });
-        navigate(`/SelectFrame?id=${uniqueString}`, { state: { photoLink: photoLink } });
+        navigate(`/SelectFrame?id=${uniqueString}`, {
+          state: { photoLink: photoLink },
+        });
       } else {
-        console.log('User is not authenticated');
+        console.log("User is not authenticated");
       }
     } catch (error) {
-      console.log('Something went wrong: ', error);
+      console.log("Something went wrong: ", error);
     }
   };
 
@@ -112,9 +124,11 @@ const QRCodeComponent = () => {
       ) : validation ? (
         isCancelled ? (
           <main className="flex-1 flex flex-col items-center justify-center">
-            <p>You have cancelled the process. Thank you for using our service.</p>
+            <p>
+              You have cancelled the process. Thank you for using our service.
+            </p>
             {setTimeout(() => {
-              navigate('/Home'); // Replace '/welcome' with the appropriate route for the welcome page
+              navigate("/Home"); // Replace '/welcome' with the appropriate route for the welcome page
             }, 3000)}
           </main>
         ) : (
@@ -125,17 +139,35 @@ const QRCodeComponent = () => {
                   <QRCode value={redirectUrl} size={356} />
                 </div>
                 <h1>Please Scan the QR Code</h1>
+                <p>or go to this url: {redirectUrl}</p>
               </>
             ) : !photoUploaded ? (
               <>
-                <img className="max-w-full max-h-64" src={Rofabs} alt="Rofabs" />
+                <img
+                  className="max-w-full max-h-64"
+                  src={Rofabs}
+                  alt="Rofabs"
+                />
                 <CgSpinner size={64} className="mt-1 animate-spin" />
                 <p>Waiting for your picture upload to be completed</p>
               </>
             ) : (
               <>
-                <img src={photoLink} alt="Uploaded" className="max-w-full max-h-96" />
-                <button className="mt-3 bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+                <img
+                  src={photoLink}
+                  alt="Uploaded"
+                  className="max-w-full max-h-96"
+                />
+                <button
+                  className="mt-3 bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+                  onClick={() =>
+                    navigate("/EditPhoto", { state: { photoLink } })
+                  }
+                >
+                  Edit Photo
+                </button>
+                <button
+                  className="mt-3 bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
                   onClick={handleProcessedWithPhoto}
                 >
                   Processed with Photo
@@ -166,5 +198,3 @@ const QRCodeComponent = () => {
 };
 
 export default QRCodeComponent;
-
-

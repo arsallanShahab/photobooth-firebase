@@ -1,25 +1,27 @@
-import React, { useEffect, useState } from 'react';
+import { collection, doc, setDoc } from "firebase/firestore";
+import React, { useEffect, useState } from "react";
+import { CgSpinner } from "react-icons/cg";
 import { useNavigate } from "react-router-dom";
-import Header from './Header/Header';
-import { v4 as uuidv4 } from 'uuid';
-import { auth, db } from './FireBase/Firebase';
-import { collection, doc, setDoc } from 'firebase/firestore';
-import { CgSpinner } from 'react-icons/cg';
+import { v4 as uuidv4 } from "uuid";
+import { auth, db } from "./FireBase/Firebase";
+import Header from "./Header/Header";
 
 const Home = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (!user) {
-        navigate('/login');
+        navigate("/login");
       } else {
-        console.log('User is signed in')
+        console.log("User is signed in");
       }
     });
 
     return unsubscribe;
-  }, [navigate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const generateUniqueString = () => {
     const uniqueString = uuidv4();
@@ -27,7 +29,7 @@ const Home = () => {
   };
 
   const handleClickPhoto = () => {
-    navigate('/CameraView');
+    navigate("/CameraView");
   };
 
   const handleUploadPhoto = async () => {
@@ -36,37 +38,44 @@ const Home = () => {
     try {
       const user = auth.currentUser;
       if (user) {
-        const usersRef = collection(db, 'users');
+        const usersRef = collection(db, "users");
         const userDocRef = doc(usersRef, user.uid);
-        await setDoc(userDocRef, {
-          CurrentProcess: {
-            QRCodeUniqueString: uniqueString,
-            isQRCodeScanned: false,
-            photoLink: "",
-            photoUploaded: false,
-            isDelete: false,
-            disablePhotoUpload: false,
-            isCancelled: false,
+        await setDoc(
+          userDocRef,
+          {
+            CurrentProcess: {
+              QRCodeUniqueString: uniqueString,
+              isQRCodeScanned: false,
+              photoLink: "",
+              photoUploaded: false,
+              isDelete: false,
+              disablePhotoUpload: false,
+              isCancelled: false,
+            },
           },
-        }, { merge: true });
+          { merge: true }
+        );
         navigate(`/QRCode?id=${uniqueString}`);
       } else {
-        console.error('User is not authenticated');
+        console.error("User is not authenticated");
       }
     } catch (error) {
-      console.error('Error updating document:', error);
+      console.error("Error updating document:", error);
     } finally {
       setLoading(false);
     }
   };
 
   const handleLogout = () => {
-    auth.signOut().then(() => {
-      navigate('/login');
-    }).catch((error) => {
-      console.error('Error signing out:', error);
-      // Handle error gracefully, show toast or alert
-    });
+    auth
+      .signOut()
+      .then(() => {
+        navigate("/login");
+      })
+      .catch((error) => {
+        console.error("Error signing out:", error);
+        // Handle error gracefully, show toast or alert
+      });
   };
 
   return (
@@ -88,7 +97,11 @@ const Home = () => {
             onClick={handleUploadPhoto}
             disabled={loading}
           >
-            {loading ? <CgSpinner className="animate-spin" size={20} /> : 'Upload'}
+            {loading ? (
+              <CgSpinner className="animate-spin" size={20} />
+            ) : (
+              "Upload"
+            )}
           </button>
           <button
             className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
