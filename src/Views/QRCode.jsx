@@ -166,12 +166,12 @@ const QRCodeComponent = () => {
                 >
                   Edit Photo
                 </button>
-                <button
+                {/* <button
                   className="mt-3 bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
                   onClick={handleProcessedWithPhoto}
                 >
                   Processed with Photo
-                </button>
+                </button> */}
               </>
             )}
             <div className="flex flex-row">
